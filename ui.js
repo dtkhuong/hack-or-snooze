@@ -9,6 +9,12 @@ $(async function() {
   const $navLogin = $("#nav-login");
   const $navLogOut = $("#nav-logout");
   const $mainNavLinks = $(".main-nav-links");
+  const $navUsername = $("#nav-welcome");
+  const $navUserProfile = $("#nav-user-profile");
+  const $profileName = $("#profile-name");
+  const $profileUsername = $("#profile-username");
+  const $profileDate = $("#profile-account-date");
+  const $navSubmit = $("#nav-submit");
 
   // global storyList variable
   let storyList = null;
@@ -90,6 +96,17 @@ $(async function() {
     $allStoriesList.show();
   });
 
+  // Show only User Profile Info Section
+  $navUserProfile.on("click", function() {
+    hideElements();
+  });
+  // Show new article submit form
+  $navSubmit.on("click", function() {
+    $allStoriesList.show();
+    $submitForm.show('slow','linear');
+  });
+
+
   /**
    * On page load, checks local storage to see if the user is already logged in.
    * Renders page information accordingly.
@@ -107,12 +124,10 @@ $(async function() {
     await generateStories();
 
     if (currentUser) {
-      showNavForLoggedInUser();
+      console.log("Current Username: ", currentUser);
+      showNavForLoggedInUser(currentUser);
     } 
 
-    if (!currentUser) {
-      showNavForLoggedInUser();
-    } 
     // else {
     //   console.log(currentUser);
     // }
@@ -197,10 +212,17 @@ $(async function() {
     elementsArr.forEach($elem => $elem.hide());
   }
 
-  function showNavForLoggedInUser() {
+  function showNavForLoggedInUser(userObj) {
+    let date = userObj.createdAt.split("T");
+    
     $navLogin.hide();
     $navLogOut.show();
     $mainNavLinks.removeClass("hidden");
+    $navUsername.show();
+    $navUserProfile.html(userObj.username);
+    $profileName.html(`Name: ${userObj.name}`);
+    $profileUsername.html(`Username: ${userObj.username}`);
+    $profileDate.html(`Account Created: ${date[0]}`);
   }
 
   /* simple function to pull the hostname from a URL */
