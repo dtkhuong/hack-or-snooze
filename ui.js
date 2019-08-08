@@ -1,4 +1,4 @@
-$(async function() {
+$(async function () {
   // cache some selectors we'll be using quite a bit
   const $allStoriesList = $("#all-articles-list");
   const $submitForm = $("#submit-form");
@@ -15,6 +15,12 @@ $(async function() {
   const $profileUsername = $("#profile-username");
   const $profileDate = $("#profile-account-date");
   const $navSubmit = $("#nav-submit");
+  const $author = $("#author");
+  const $title = $("#title");
+  const $url = $("#url");
+
+
+  // const $storySubmit = $("#story-submit");
 
   // global storyList variable
   let storyList = null;
@@ -29,7 +35,7 @@ $(async function() {
    *  If successfully we will setup the user instance
    */
 
-  $loginForm.on("submit", async function(evt) {
+  $loginForm.on("submit", async function (evt) {
     evt.preventDefault(); // no page-refresh on submit
 
     // grab the username and password
@@ -49,7 +55,7 @@ $(async function() {
    *  If successfully we will setup a new user instance
    */
 
-  $createAccountForm.on("submit", async function(evt) {
+  $createAccountForm.on("submit", async function (evt) {
     evt.preventDefault(); // no page refresh
 
     // grab the required fields
@@ -68,7 +74,7 @@ $(async function() {
    * Log Out Functionality
    */
 
-  $navLogOut.on("click", function() {
+  $navLogOut.on("click", function () {
     // empty out local storage
     localStorage.clear();
     // refresh the page, clearing memory
@@ -79,7 +85,7 @@ $(async function() {
    * Event Handler for Clicking Login
    */
 
-  $navLogin.on("click", function() {
+  $navLogin.on("click", function () {
     // Show the Login and Create Account Forms
     $loginForm.slideToggle();
     $createAccountForm.slideToggle();
@@ -90,22 +96,45 @@ $(async function() {
    * Event handler for Navigation to Homepage
    */
 
-  $("body").on("click", "#nav-all", async function() {
+  $("body").on("click", "#nav-all", async function () {
     hideElements();
     await generateStories();
     $allStoriesList.show();
   });
 
-  // Show only User Profile Info Section
-  $navUserProfile.on("click", function() {
+  /**
+   * Event handler for showing only user profile info section
+   */
+
+  $navUserProfile.on("click", function () {
     hideElements();
   });
-  // Show new article submit form
-  $navSubmit.on("click", function() {
+
+  /**
+   * Event handler for showing new article submit form
+   */
+
+  $navSubmit.on("click", function () {
     $allStoriesList.show();
-    $submitForm.show('slow','linear');
+    $submitForm.show('slow', 'linear');
   });
 
+  /**
+   * Event handler for submitting the story form
+   */
+
+  $submitForm.on("submit", async function (evt) {
+    evt.preventDefault();
+    let newStoryObj = {
+      author: $author.val(),
+      title: $title.val(),
+      url: $url.val()
+    }
+    let storyResponse = await storyList.addStory(currentUser, newStoryObj);
+    const result = generateStoryHTML(storyResponse.data.story);
+    $allStoriesList.prepend(result);
+    $submitForm.hide('slow', 'linear');
+  });
 
   /**
    * On page load, checks local storage to see if the user is already logged in.
@@ -124,16 +153,8 @@ $(async function() {
     await generateStories();
 
     if (currentUser) {
-      console.log("Current Username: ", currentUser);
       showNavForLoggedInUser(currentUser);
-    } 
-
-    // else {
-    //   console.log(currentUser);
-    // }
-      // else if (true){
-      //   showNavForLoggedInUser();
-      // }
+    }
   }
 
   /**
@@ -214,7 +235,7 @@ $(async function() {
 
   function showNavForLoggedInUser(userObj) {
     let date = userObj.createdAt.split("T");
-    
+
     $navLogin.hide();
     $navLogOut.show();
     $mainNavLinks.removeClass("hidden");
