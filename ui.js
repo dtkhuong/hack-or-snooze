@@ -8,6 +8,7 @@ $(async function() {
   const $ownStories = $("#my-articles");
   const $navLogin = $("#nav-login");
   const $navLogOut = $("#nav-logout");
+  const $mainNavLinks = $(".main-nav-links");
 
   // global storyList variable
   let storyList = null;
@@ -107,7 +108,17 @@ $(async function() {
 
     if (currentUser) {
       showNavForLoggedInUser();
-    }
+    } 
+
+    if (!currentUser) {
+      showNavForLoggedInUser();
+    } 
+    // else {
+    //   console.log(currentUser);
+    // }
+      // else if (true){
+      //   showNavForLoggedInUser();
+      // }
   }
 
   /**
@@ -189,6 +200,7 @@ $(async function() {
   function showNavForLoggedInUser() {
     $navLogin.hide();
     $navLogOut.show();
+    $mainNavLinks.removeClass("hidden");
   }
 
   /* simple function to pull the hostname from a URL */
