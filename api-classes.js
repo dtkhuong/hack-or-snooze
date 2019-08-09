@@ -163,6 +163,19 @@ class User {
     existingUser.ownStories = response.data.user.stories.map(s => new Story(s));
     return existingUser;
   }
+
+  async toggleFavorites(storyId, unstarred) {
+    // console.log("username is: ", this.username);
+    if(unstarred) {
+      console.log("This has been favorited");
+      const response = await axios.post(`${BASE_URL}/users/${this.username}/favorites/${storyId}`, {"token": this.loginToken});
+      console.log("This is favorite response :", response)
+    } else {
+      console.log("This has been unfavorited");
+      const response = await axios.delete(`${BASE_URL}/users/${this.username}/favorites/${storyId}`, {data: {"token": this.loginToken}});
+      console.log("This is unfavorite response :", response)
+    }
+  }
 }
 
 /**

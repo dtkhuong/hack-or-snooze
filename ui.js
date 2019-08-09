@@ -11,10 +11,12 @@ $(async function () {
   const $mainNavLinks = $(".main-nav-links");
   const $navUsername = $("#nav-welcome");
   const $navUserProfile = $("#nav-user-profile");
+  const $profileContainer = $("#user-profile");
   const $profileName = $("#profile-name");
   const $profileUsername = $("#profile-username");
   const $profileDate = $("#profile-account-date");
   const $navSubmit = $("#nav-submit");
+  const $navFavorites = $("#nav-favorites");
   const $author = $("#author");
   const $title = $("#title");
   const $url = $("#url");
@@ -100,6 +102,7 @@ $(async function () {
     hideElements();
     await generateStories();
     $allStoriesList.show();
+    $profileContainer.hide();
   });
 
   /**
@@ -120,6 +123,14 @@ $(async function () {
   });
 
   /**
+   * Event handler for showing favorites page for user
+   */
+  $navFavorites.on("click", function() {
+    generateFavorites();
+    $profileContainer.hide();
+  });
+
+  /**
    * Event handler for submitting the story form
    */
 
@@ -137,6 +148,7 @@ $(async function () {
     console.log("currentUser is ", currentUser);
     $submitForm.hide('slow', 'linear');
   });
+
 
   /**
    * On page load, checks local storage to see if the user is already logged in.
@@ -197,6 +209,33 @@ $(async function () {
       const result = generateStoryHTML(story);
       $allStoriesList.append(result);
     }
+    /**
+     * Event handler for adding or removing a favorite
+     */
+    const $icon = $("i");
+    $icon.on("click", function () {
+      // check if user clicks an unchecked star.
+      const starId = $(this).closest('li').attr('id');
+      // console.log("Star ID is: ", starId)
+      let unstarred = $(this).hasClass("far");
+      if(unstarred) {
+        $(this).removeClass("far").addClass("fas");
+        console.log("Toggled add star")
+      } else {
+        $(this).removeClass("fas").addClass("far");
+        console.log("Toggled remove star")
+      }
+      currentUser.toggleFavorites(starId, unstarred);
+    })
+  }
+
+  async function generateFavorites() {
+    // const favoritesListInstance = await currentUser.toggleFavorites(storyId, unstarred)
+    hideElements();
+    await generateStories();
+    $allStoriesList.show();
+    // hide all stories with an unchecked star
+
   }
 
   /**
