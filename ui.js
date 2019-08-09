@@ -133,6 +133,8 @@ $(async function () {
     let storyResponse = await storyList.addStory(currentUser, newStoryObj);
     const result = generateStoryHTML(storyResponse.data.story);
     $allStoriesList.prepend(result);
+    // currentUser.ownStories.push(storyResponse);
+    console.log("currentUser is ", currentUser);
     $submitForm.hide('slow', 'linear');
   });
 
@@ -207,6 +209,9 @@ $(async function () {
     // render story markup
     const storyMarkup = $(`
       <li id="${story.storyId}">
+        <span class="star">
+          <i class="far fa-star"></i>
+        </span>
         <a class="article-link" href="${story.url}" target="a_blank">
           <strong>${story.title}</strong>
         </a>
