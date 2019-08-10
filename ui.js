@@ -1,6 +1,8 @@
 $(async function () {
   // cache some selectors we'll be using quite a bit
   const $allStoriesList = $("#all-articles-list");
+  const $favoritedArticles = $("#favorited-articles");
+  const $myStoriesList = $("#my-articles");
   const $submitForm = $("#submit-form");
   const $filteredArticles = $("#filtered-articles");
   const $loginForm = $("#login-form");
@@ -11,6 +13,7 @@ $(async function () {
   const $mainNavLinks = $(".main-nav-links");
   const $navUsername = $("#nav-welcome");
   const $navUserProfile = $("#nav-user-profile");
+  const $navMyStories = $("#nav-my-stories");
   const $profileContainer = $("#user-profile");
   const $profileName = $("#profile-name");
   const $profileUsername = $("#profile-username");
@@ -100,7 +103,9 @@ $(async function () {
 
   $("body").on("click", "#nav-all", async function () {
     hideElements();
+    await checkIfLoggedIn();
     await generateStories();
+    await generateFavorites();
     $allStoriesList.show();
     $profileContainer.hide();
   });
@@ -125,9 +130,28 @@ $(async function () {
   /**
    * Event handler for showing favorites page for user
    */
-  $navFavorites.on("click", function() {
-    generateFavorites();
+  $navFavorites.on("click", async function() {
+    
+    await checkIfLoggedIn();
+    await generateStories();
+    await generateFavorites();
+    $favoritedArticles.show();
     $profileContainer.hide();
+  });
+
+  /**
+   * Event handler for showing stories page for user
+   */
+  $navMyStories.on("click", async function() {
+    
+    await checkIfLoggedIn();
+    await generateStories();
+    await generateFavorites();
+    await generateMyStories();
+
+    $myStoriesList.show();
+    $profileContainer.hide();
+    $favoritedArticles.hide();
   });
 
   /**
@@ -199,14 +223,24 @@ $(async function () {
   async function generateStories() {
     // get an instance of StoryList
     const storyListInstance = await StoryList.getStories();
+    let favoritesList = currentUser.favorites;
+  
+    // await generateFavorites();
+    $allStoriesList.show();
+    // $profileContainer.hide();
+    // $favoritedArticles.hide();
     // update our global variable
     storyList = storyListInstance;
+    
     // empty out that part of the page
     $allStoriesList.empty();
 
     // loop through all of our stories and generate HTML for them
     for (let story of storyList.stories) {
-      const result = generateStoryHTML(story);
+      
+      let isFav = isStoryInFavList(story,favoritesList);
+      
+      const result = generateStoryHTML(story, isFav);
       $allStoriesList.append(result);
     }
     /**
@@ -220,36 +254,178 @@ $(async function () {
       let unstarred = $(this).hasClass("far");
       if(unstarred) {
         $(this).removeClass("far").addClass("fas");
-        console.log("Toggled add star")
+        
       } else {
         $(this).removeClass("fas").addClass("far");
-        console.log("Toggled remove star")
+        
       }
       currentUser.toggleFavorites(starId, unstarred);
     })
   }
 
+  function isStoryInFavList(story, favoritesList){
+    for (let i = 0; i < favoritesList.length; i++){
+      if (story.storyId === favoritesList[i].storyId){
+        return true;
+      }
+    }
+    return false;
+  }
+
   async function generateFavorites() {
     // const favoritesListInstance = await currentUser.toggleFavorites(storyId, unstarred)
     hideElements();
-    await generateStories();
-    $allStoriesList.show();
-    // hide all stories with an unchecked star
+    // await generateStories();
+    
 
+    // empty out that part of the page
+    $allStoriesList.hide();
+    $favoritedArticles.empty();
+
+    // loop through all of our stories and generate HTML for them
+    for (let favorite of currentUser.favorites) {
+      const $result = generateFavoriteHTML(favorite);
+      $favoritedArticles.append($result);
+    }
+    $favoritedArticles.show();
+
+
+     /**
+     * Event handler for adding or removing a favorite
+     */
+    const $icon = $("i");
+    $icon.on("click", async function () {
+      // check if user clicks an unchecked star.
+      const starId = $(this).closest('li').attr('id');
+      // console.log("Star ID is: ", starId)
+      let unstarred = $(this).hasClass("far");
+      if(unstarred) {
+        $(this).removeClass("far").addClass("fas");
+        // console.log("Toggled add star")
+      } else {
+        $(this).removeClass("fas").addClass("far");
+        // console.log("Toggled remove star")
+      }
+      await currentUser.toggleFavorites(starId, unstarred);
+      // $favoritedArticles.empty();
+      // $favoritedArticles.show();
+    })
   }
+
+  //function
+  async function generateMyStories() {
+    hideElements();
+    // await generateStories();
+    console.log("Has been clicked")
+    // empty out that part of the page
+    $allStoriesList.hide();
+    $myStoriesList.empty();
+    console.log("Current user stories: ", currentUser.ownStories)
+    // loop through all of our stories and generate HTML for them
+    for (let myStory of currentUser.ownStories) {
+
+      let isFav = isStoryInFavList(myStory,currentUser.favorites);
+
+      const $result = generateUserStoryHTML(myStory, isFav);
+      $myStoriesList.append($result);
+      console.log($result)
+    }
+    $myStoriesList.show();
+    // Right now only getting listener on star - not trash can
+    const $icon = $("i");
+    $icon.on("click", async function () {
+      // check if user clicks an unchecked star.
+      const starId = $(this).closest('li').attr('id');
+      // console.log("Star ID is: ", starId)
+      let unstarred = $(this).hasClass("far");
+      if(unstarred) {
+        $(this).removeClass("far").addClass("fas");
+        // console.log("Toggled add star")
+      } else {
+        $(this).removeClass("fas").addClass("far");
+        // console.log("Toggled remove star")
+      }
+      await currentUser.toggleFavorites(starId, unstarred);
+      // $favoritedArticles.empty();
+      // $favoritedArticles.show();
+    })
+  }
+
+   /**
+   * A function to render HTML for an individual Favorite instance
+   */
+
+  function generateFavoriteHTML(story) {
+    let hostName = getHostName(story.url);
+    let starClass = "fas";
+    // if (story has been favorited by user){
+    //   starClass = "fas";
+    // }
+    // console.log('story is ', story);
+    // render favorite markup
+    const favoriteMarkup = $(`
+      <li id="${story.storyId}">
+        <span class="star">
+          <i class="${starClass} fa-star"></i>
+        </span>
+        <a class="article-link" href="${story.url}" target="a_blank">
+          <strong>${story.title}</strong>
+        </a>
+        <small class="article-author">by ${story.author}</small>
+        <small class="article-hostname ${hostName}">(${hostName})</small>
+        <small class="article-username">posted by ${story.username}</small>
+      </li>
+    `);
+    return favoriteMarkup;
+  }
+
+  /**
+   * A function to render HTML for an individual Favorite instance
+   */
+
+  function generateUserStoryHTML(story, isFav) {
+    let hostName = getHostName(story.url);
+    let iconClass = "far";
+    // if (story has been favorited by user){
+    //   starClass = "fas";
+    // }
+    // console.log('story is ', story);
+
+    if (isFav){iconClass = "fas"}
+    // render favorite markup
+    const favoriteMarkup = $(`
+      <li id="${story.storyId}">
+        <span class="trash-can">
+          <i class="fas fa-trash-alt"></i>
+        </span>
+        <span class="star">
+          <i class="${iconClass} fa-star"></i>
+        </span>
+        <a class="article-link" href="${story.url}" target="a_blank">
+          <strong>${story.title}</strong>
+        </a>
+        <small class="article-author">by ${story.author}</small>
+        <small class="article-hostname ${hostName}">(${hostName})</small>
+        <small class="article-username">posted by ${story.username}</small>
+      </li>
+    `);
+    return favoriteMarkup;
+  }
+
 
   /**
    * A function to render HTML for an individual Story instance
    */
 
-  function generateStoryHTML(story) {
+  function generateStoryHTML(story, isFav) {
     let hostName = getHostName(story.url);
-
+    let iconClass = "far";
+    if (isFav){iconClass = "fas"}
     // render story markup
     const storyMarkup = $(`
       <li id="${story.storyId}">
         <span class="star">
-          <i class="far fa-star"></i>
+          <i class="${iconClass} fa-star"></i>
         </span>
         <a class="article-link" href="${story.url}" target="a_blank">
           <strong>${story.title}</strong>
